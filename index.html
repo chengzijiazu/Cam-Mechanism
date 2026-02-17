@@ -167,8 +167,8 @@ class CombinedView{
     this.cam=cam;this.container=container;this.opts=opts;
     this.angle=0;
     /* Layout constants */
-    this.cx=220;this.cy=230;this.sc=2;/* mm→SVG */
-    this.CL=55;this.CR=400;this.CT=440;this.CB=700;
+    this.cx=220;this.cy=175;this.sc=1.6;/* mm→SVG */
+    this.CL=50;this.CR=400;this.CT=340;this.CB=540;
     this._build();
   }
   _profR(phi){return this.cam.profR(phi)*this.sc}
@@ -177,7 +177,7 @@ class CombinedView{
   _sY(s){return this.CB-(s/(this.cam.h||1))*(this.CB-this.CT)}
 
   _build(){
-    this.svg=mkSVG('0 0 440 770');
+    this.svg=mkSVG('0 0 440 600');
     this.svg.style.touchAction='none';
     const defs=sv('defs');
     /* hatch pattern */
@@ -187,7 +187,7 @@ class CombinedView{
     this.svg.append(defs);
 
     /* background */
-    this.svg.append(sv('rect',{width:440,height:770,fill:BG,rx:0}));
+    this.svg.append(sv('rect',{width:440,height:600,fill:BG,rx:0}));
 
     /* ---- CAM SECTION ---- */
     this.camRoot=sv('g',{transform:`translate(${this.cx},${this.cy})`});
@@ -539,7 +539,7 @@ class Drag{
   _angle(e){
     const pt=this.svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
     const ctm=this.svg.getScreenCTM();
-    if(ctm){const sp=pt.matrixTransform(ctm.inverse());const dx=sp.x-220,dy=sp.y-230;let d=Math.atan2(dx,-dy)/DEG;if(d<0)d+=360;return d}
+    if(ctm){const sp=pt.matrixTransform(ctm.inverse());const dx=sp.x-220,dy=sp.y-175;let d=Math.atan2(dx,-dy)/DEG;if(d<0)d+=360;return d}
     return 0;
   }
   _toSpec(profileAngle){
@@ -586,7 +586,7 @@ function buildCover(car,cam){
   const cv=new CombinedView(c.querySelector('#cvW'),cam,{mini:true,initAngle:0});
   /* hide chart for cover mini */
   cv.chartG.style.display='none';cv.cursor.style.display='none';cv.cursorDot.style.display='none';
-  cv.svg.setAttribute('viewBox','70 25 300 380');
+  cv.svg.setAttribute('viewBox','80 15 280 300');
   const an=new Anim();an.spd=50;an.add(a=>cv.update(a));an.start();
   c.querySelector('#cvStart').onclick=()=>car.next();
   return{an,cv}
@@ -603,7 +603,7 @@ function buildDiagram(car,cam){
       <span class="tag purple">回程 ${cam.returnA}°</span>
       <span class="tag cyan">近休止 ${cam.nearA}°</span>
     </div>
-    <div class="svg-wrap svg-full" id="diagW" style="aspect-ratio:440/770"></div>
+    <div class="svg-wrap svg-full" id="diagW" style="aspect-ratio:440/600"></div>
     <div class="formula-box" style="margin-top:12px">
 推程 (SHM): s = (h/2)(1 − cos(π·θ/δt))<br>
 回程 (SHM): s = (h/2)(1 + cos(π·(θ−δt−δs)/δr))
@@ -620,7 +620,7 @@ function buildDemo(car,cam){
   c.innerHTML=`<div class="card-inner no-pad">
     <div style="padding:16px 16px 0"><div class="card-title">原理演示</div>
     <div class="card-subtitle">观察凸轮旋转与从动件位移的实时对应</div></div>
-    <div class="svg-wrap svg-full" id="demoW" style="aspect-ratio:440/770"></div>
+    <div class="svg-wrap svg-full" id="demoW" style="aspect-ratio:440/600"></div>
     <div class="ctrl-bar">
       <button class="ctrl-btn active" id="demoPlay"><svg viewBox="0 0 24 24" id="demoPlayI"><path d="M8 5v14l11-7z"/></svg><span id="demoPlayL">播放</span></button>
       <button class="ctrl-btn" id="demoReset"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>复位</button>
@@ -651,7 +651,7 @@ function buildInter(car,cam){
   c.innerHTML=`<div class="card-inner no-pad">
     <div style="padding:14px 16px 0"><div class="card-title">互动探究</div>
     <div class="hint-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9a3 3 0 100 6 3 3 0 000-6zm0-7C5.6 2 2 5.6 2 10c0 7.4 8 14 8 14s8-6.6 8-14c0-4.4-3.6-8-8-8z"/></svg>拖拽凸轮区域旋转</div></div>
-    <div class="svg-wrap svg-full" id="interW" style="aspect-ratio:440/770"></div>
+    <div class="svg-wrap svg-full" id="interW" style="aspect-ratio:440/600"></div>
     <div class="data-panel" style="margin:8px 16px">
       <div><div class="data-label">转角 θ</div><div class="data-value" style="color:#0C8CE9" id="intA">0.0°</div></div>
       <div><div class="data-label">位移 s</div><div class="data-value" style="color:#1e8e3e" id="intS">0.00 mm</div></div>
@@ -676,7 +676,7 @@ function buildLab(car,cam){
     <div class="slider-group"><div class="slider-header"><span class="slider-label">行程 h</span><span class="slider-val" id="labH">${cam.h} mm</span></div><input type="range" id="labHS" min="5" max="40" value="${cam.h}" step="1"></div>
     <div class="slider-group"><div class="slider-header"><span class="slider-label">推程角 δt</span><span class="slider-val" id="labR">${cam.riseA}°</span></div><input type="range" id="labRS" min="30" max="150" value="${cam.riseA}" step="5"></div>
     <div class="slider-group"><div class="slider-header"><span class="slider-label">远休止角 δs</span><span class="slider-val" id="labD">${cam.dwellA}°</span></div><input type="range" id="labDS" min="20" max="120" value="${cam.dwellA}" step="5"></div>
-    <div class="svg-wrap svg-full" id="labW" style="aspect-ratio:440/770;margin-top:6px"></div>
+    <div class="svg-wrap svg-full" id="labW" style="aspect-ratio:440/600;margin-top:6px"></div>
   `);
   car.add(c);
   let lc=new CamMechanism({Rb:cam.Rb,h:cam.h,rRoller:cam.rRoller,riseA:cam.riseA,dwellA:cam.dwellA,returnA:cam.returnA});
