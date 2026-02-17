@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>凸轮机构运动仿真 - 交互式教学</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#ffffff}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1a1a1a;-webkit-tap-highlight-color:transparent}
+#app{width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column}
+.carousel{flex:1;position:relative;overflow:hidden}
+.card{position:absolute;top:0;left:0;width:100%;height:100%;transition:transform .45s cubic-bezier(.4,0,.2,1),opacity .45s ease;will-change:transform,opacity;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:#FFFFFF}
+.card.prev{transform:translateX(-100%);opacity:0;pointer-events:none}
+.card.active{transform:translateX(0);opacity:1}
+.card.next{transform:translateX(100%);opacity:0;pointer-events:none}
+.card-inner{padding:20px 16px 16px;min-height:100%;display:flex;flex-direction:column}
+.card-inner.no-pad{padding:0}
+.bottom-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;padding-bottom:max(8px,env(safe-area-inset-bottom));background:#FAFAFA;border-top:1px solid rgba(0,0,0,.08);z-index:100;flex-shrink:0}
+.nav-btn{display:flex;align-items:center;gap:5px;padding:9px 16px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:rgba(0,0,0,.05);color:#555;-webkit-user-select:none;user-select:none}
+.nav-btn:active{transform:scale(.94);background:rgba(0,0,0,.1)}
+.nav-btn:disabled{opacity:.3;pointer-events:none}
+.nav-btn.primary{background:rgba(12,140,233,.12);color:#0C8CE9}
+.nav-btn svg{width:15px;height:15px;fill:currentColor;flex-shrink:0}
+.dots{display:flex;gap:7px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(0,0,0,.15);transition:all .3s}
+.dot.active{background:#0C8CE9;width:20px;border-radius:4px}
+.card-title{font-size:24px;font-weight:700;color:#1a1a1a;margin-bottom:6px}
+.card-subtitle{font-size:14px;color:rgba(0,0,0,.45);line-height:1.5;margin-bottom:14px}
+.section-title{font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:10px}
+.svg-wrap{width:100%;border-radius:12px;overflow:hidden;position:relative;background:#FAFAFA}
+.svg-wrap svg{display:block;width:100%;height:auto}
+.svg-full{border-radius:0;background:transparent}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;white-space:nowrap}
+.tag.red{background:rgba(217,48,37,.1);color:#d93025}
+.tag.green{background:rgba(30,142,62,.1);color:#1e8e3e}
+.tag.purple{background:rgba(142,68,230,.1);color:#8e44e6}
+.tag.cyan{background:rgba(12,140,233,.1);color:#0C8CE9}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.data-panel{background:#F5F5F5;border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+.data-label{font-size:10px;color:rgba(0,0,0,.4);font-weight:500;margin-bottom:1px;text-transform:uppercase;letter-spacing:.3px}
+.data-value{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;font-family:'SF Mono','Menlo','Consolas',monospace}
+.ctrl-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;padding:0 16px}
+.ctrl-btn{display:flex;align-items:center;justify-content:center;gap:4px;padding:7px 14px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:rgba(0,0,0,.05);color:#555}
+.ctrl-btn:active{transform:scale(.94)}
+.ctrl-btn.active{background:rgba(12,140,233,.12);color:#0C8CE9}
+.ctrl-btn svg{width:15px;height:15px;fill:currentColor}
+.slider-group{margin-bottom:14px}
+.slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.slider-label{font-size:13px;font-weight:600;color:#333}
+.slider-val{font-size:13px;font-weight:700;color:#0C8CE9;font-family:'SF Mono','Menlo','Consolas',monospace}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:#e0e0e0;border-radius:3px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;background:#0C8CE9;border-radius:50%;cursor:pointer;box-shadow:0 2px 8px rgba(12,140,233,.3)}
+input[type=range]::-moz-range-thumb{width:26px;height:26px;background:#0C8CE9;border-radius:50%;cursor:pointer;border:none}
+.cover-card{align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at 50% 40%,#FFFFFF 0%,#F0F4F8 70%)}
+.cover-title{font-size:30px;font-weight:800;line-height:1.25;color:#1a1a1a;margin-bottom:10px}
+.cover-sub{font-size:15px;color:rgba(0,0,0,.45);line-height:1.6;margin-bottom:24px}
+.start-btn{display:inline-flex;align-items:center;gap:8px;padding:13px 32px;border:none;border-radius:12px;background:rgba(12,140,233,.1);color:#0C8CE9;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid rgba(12,140,233,.25)}
+.start-btn:active{transform:scale(.95)}
+.phase-list{list-style:none;margin:10px 0}
+.phase-list li{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06);font-size:13px;line-height:1.6;color:rgba(0,0,0,.7)}
+.phase-list li:last-child{border-bottom:none}
+.phase-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.formula-box{background:#F5F7FA;border-radius:10px;padding:12px 14px;margin:8px 0;font-family:'SF Mono','Menlo','Consolas',monospace;font-size:13px;line-height:1.8;color:#333;border-left:3px solid #0C8CE9}
+.summary-item{background:#F5F7FA;border-radius:12px;padding:14px;margin-bottom:10px}
+.summary-item h3{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+.summary-item p{font-size:13px;color:rgba(0,0,0,.6);line-height:1.6}
+.hint-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(12,140,233,.08);color:#0C8CE9;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:600;margin-bottom:10px}
+@media(min-width:768px){.card-inner{padding:28px 40px;max-width:720px;margin:0 auto}.cover-title{font-size:38px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="carousel" id="carousel"></div>
+  <nav class="bottom-nav">
+    <button class="nav-btn" id="prevBtn" disabled><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg><span>上一页</span></button>
+    <div class="dots" id="dots"></div>
+    <button class="nav-btn primary" id="nextBtn"><span>下一页</span><svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg></button>
+  </nav>
+</div>
+<script>
+const DEG=Math.PI/180, SVG_NS='http://www.w3.org/2000/svg';
+const P_COLORS={rise:'#d93025',farDwell:'#1e8e3e',return_:'#8e44e6',nearDwell:'#0C8CE9'};
+const BG='#FAFAFA', BG_DARK='#F0F0F0';
+
+/* ============ CAM MATH ============ */
+class CamMechanism{
+  constructor(p){
+    this.Rb=p.Rb??40;this.h=p.h??20;this.rRoller=p.rRoller??8;
+    this.riseA=p.riseA??90;this.dwellA=p.dwellA??60;this.returnA=p.returnA??120;
+    this.nearA=360-this.riseA-this.dwellA-this.returnA;
+  }
+  /* s(θ) where θ=spec angle, 0=start of rise */
+  getS(t){
+    t=((t%360)+360)%360;
+    if(t<this.riseA)return(this.h/2)*(1-Math.cos(Math.PI*t/this.riseA));
+    if(t<this.riseA+this.dwellA)return this.h;
+    if(t<this.riseA+this.dwellA+this.returnA){const l=t-this.riseA-this.dwellA;return(this.h/2)*(1+Math.cos(Math.PI*l/this.returnA))}
+    return 0;
+  }
+  getV(t){
+    t=((t%360)+360)%360;
+    if(t<this.riseA)return(this.h*Math.PI)/(2*this.riseA)*Math.sin(Math.PI*t/this.riseA);
+    if(t<this.riseA+this.dwellA)return 0;
+    if(t<this.riseA+this.dwellA+this.returnA){const l=t-this.riseA-this.dwellA;return-(this.h*Math.PI)/(2*this.returnA)*Math.sin(Math.PI*l/this.returnA)}
+    return 0;
+  }
+  getA(t){
+    t=((t%360)+360)%360;
+    if(t<this.riseA)return(this.h*Math.PI*Math.PI)/(2*this.riseA*this.riseA)*Math.cos(Math.PI*t/this.riseA);
+    if(t<this.riseA+this.dwellA)return 0;
+    if(t<this.riseA+this.dwellA+this.returnA){const l=t-this.riseA-this.dwellA;return-(this.h*Math.PI*Math.PI)/(2*this.returnA*this.returnA)*Math.cos(Math.PI*l/this.returnA)}
+    return 0;
+  }
+  maxV(){return(this.h*Math.PI)/(2*Math.min(this.riseA,this.returnA))}
+  /* profile displacement at φ CW from top */
+  profS(phi){return this.getS(phi-this.nearA)}
+  profR(phi){return this.Rb+this.profS(phi)}
+  /* SVG rotation angle for spec angle θ */
+  svgRot(theta){return-(theta+this.nearA)}
+  /* phase boundaries on profile (φ CW from top) */
+  profPhases(){
+    const nA=this.nearA;
+    return[
+      {s:0,e:nA,color:P_COLORS.nearDwell,name:'近休止',label:'D→A'},
+      {s:nA,e:nA+this.riseA,color:P_COLORS.rise,name:'推程',label:'A→B'},
+      {s:nA+this.riseA,e:nA+this.riseA+this.dwellA,color:P_COLORS.farDwell,name:'远休止',label:'B→C'},
+      {s:nA+this.riseA+this.dwellA,e:360,color:P_COLORS.return_,name:'回程',label:'C→D'}
+    ];
+  }
+  /* phase boundaries on chart (θ spec) */
+  chartPhases(){
+    const r=this.riseA,d=this.dwellA,rt=this.returnA;
+    return[
+      {s:0,e:r,color:P_COLORS.rise,name:'推程',label:'A→B'},
+      {s:r,e:r+d,color:P_COLORS.farDwell,name:'远休止',label:'B→C'},
+      {s:r+d,e:r+d+rt,color:P_COLORS.return_,name:'回程',label:'C→D'},
+      {s:r+d+rt,e:360,color:P_COLORS.nearDwell,name:'近休止',label:'D→A'}
+    ];
+  }
+  /* chart boundary θ values: A,B,C,D */
+  chartBounds(){return{A:0,B:this.riseA,C:this.riseA+this.dwellA,D:this.riseA+this.dwellA+this.returnA}}
+  /* profile boundary φ values: D,A,B,C */
+  profBounds(){
+    const n=this.nearA;
+    return{D:0,A:n,B:n+this.riseA,C:n+this.riseA+this.dwellA}
+  }
+}
+
+/* ============ SVG HELPERS ============ */
+function sv(tag,a={}){const e=document.createElementNS(SVG_NS,tag);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);return e}
+function mkSVG(vb){return sv('svg',{viewBox:vb,preserveAspectRatio:'xMidYMid meet'})}
+function ptPath(pts,close){let d='';for(let i=0;i<pts.length;i++)d+=(i?'L':'M')+pts[i].x.toFixed(1)+','+pts[i].y.toFixed(1);if(close)d+='Z';return d}
+function profPt(phi,r){const a=phi*DEG;return{x:r*Math.sin(a),y:-r*Math.cos(a)}}
+function arcPath(cx,cy,r,startDeg,endDeg,ccw){
+  const s=startDeg*DEG,e=endDeg*DEG;
+  const sx=cx+r*Math.sin(s),sy=cy-r*Math.cos(s);
+  const ex=cx+r*Math.sin(e),ey=cy-r*Math.cos(e);
+  const span=((endDeg-startDeg)%360+360)%360;
+  const large=span>180?1:0;
+  return`M${sx.toFixed(1)},${sy.toFixed(1)}A${r},${r} 0 ${large},1 ${ex.toFixed(1)},${ey.toFixed(1)}`
+}
+
+/* ============ COMBINED VIEW ============ */
+class CombinedView{
+  constructor(container,cam,opts={}){
+    this.cam=cam;this.container=container;this.opts=opts;
+    this.angle=0;
+    /* Layout constants */
+    this.cx=195;this.cy=255;this.sc=2;/* mm→SVG */
+    this.CL=455;this.CR=845;this.CT=68;this.CB=358;
+    this._build();
+  }
+  _profR(phi){return this.cam.profR(phi)*this.sc}
+  _camR(phi){return(this.cam.profR(phi)-this.cam.rRoller)*this.sc}
+  _degX(d){return this.CL+(d/360)*(this.CR-this.CL)}
+  _sY(s){return this.CB-(s/(this.cam.h||1))*(this.CB-this.CT)}
+
+  _build(){
+    this.svg=mkSVG('0 0 880 430');
+    this.svg.style.touchAction='none';
+    const defs=sv('defs');
+    /* hatch pattern */
+    const pat=sv('pattern',{id:'hatch',patternUnits:'userSpaceOnUse',width:'5',height:'5',patternTransform:'rotate(45)'});
+    pat.append(sv('line',{x1:0,y1:0,x2:0,y2:5,stroke:'rgba(0,0,0,.25)',strokeWidth:1}));
+    defs.append(pat);
+    this.svg.append(defs);
+
+    /* background */
+    this.svg.append(sv('rect',{width:880,height:430,fill:BG,rx:0}));
+
+    /* ---- CAM SECTION ---- */
+    this.camRoot=sv('g',{transform:`translate(${this.cx},${this.cy})`});
+    this.svg.append(this.camRoot);
+
+    /* base circle dashed */
+    const rbSvg=this.cam.Rb*this.sc;
+    this.baseCircle=sv('circle',{r:rbSvg,fill:'none',stroke:'rgba(0,0,0,.2)','stroke-width':1,'stroke-dasharray':'5,4'});
+    this.camRoot.append(this.baseCircle);
+
+    /* dashed cross lines */
+    this.camRoot.append(sv('line',{x1:-rbSvg-30,y1:0,x2:rbSvg+30,y2:0,stroke:'rgba(0,0,0,.1)','stroke-width':.8,'stroke-dasharray':'6,4'}));
+    this.camRoot.append(sv('line',{x1:0,y1:-rbSvg-60,x2:0,y2:rbSvg+20,stroke:'rgba(0,0,0,.1)','stroke-width':.8,'stroke-dasharray':'6,4'}));
+
+    /* cam rotation group */
+    this.camG=sv('g');
+    this.camRoot.append(this.camG);
+    this._buildCamBody();
+
+    /* guide rails (static) */
+    this._buildGuide();
+
+    /* follower group */
+    this.followerG=sv('g');
+    this.camRoot.append(this.followerG);
+    this._buildFollower();
+
+    /* static labels */
+    if(!this.opts.mini)this._buildCamLabels();
+
+    /* ---- CHART SECTION ---- */
+    this.chartG=sv('g');
+    this.svg.append(this.chartG);
+    this._buildChart();
+
+    /* cursor */
+    this.cursor=sv('line',{x1:this.CL,y1:this.CT-5,x2:this.CL,y2:this.CB+5,stroke:'rgba(0,0,0,.4)','stroke-width':1,'stroke-dasharray':'4,3'});
+    this.svg.append(this.cursor);
+    this.cursorDot=sv('circle',{r:4,fill:'#1a1a1a',stroke:'#fff','stroke-width':1.5});
+    this.svg.append(this.cursorDot);
+
+    this.update(this.opts.initAngle??0);
+    this.container.appendChild(this.svg);
+  }
+
+  _buildCamBody(){
+    this.camG.innerHTML='';
+    const cam=this.cam,phases=cam.profPhases();
+    /* filled cam body */
+    const bodyPts=[];
+    for(let i=0;i<360;i++){const r=this._camR(i);bodyPts.push(profPt(i,r))}
+    this.camG.append(sv('path',{d:ptPath(bodyPts,true),fill:'rgba(0,0,0,.04)',stroke:'none'}));
+
+    /* colored phase arcs on PITCH curve */
+    for(const p of phases){
+      const pts=[];
+      const steps=Math.max(Math.ceil((p.e-p.s)/0.5),20);
+      for(let i=0;i<=steps;i++){
+        const phi=p.s+(i/steps)*(p.e-p.s);
+        pts.push(profPt(phi,this._profR(phi)));
+      }
+      this.camG.append(sv('path',{d:ptPath(pts,false),fill:'none',stroke:p.color,'stroke-width':3,'stroke-linecap':'round'}));
+    }
+
+    /* inner circle (shaft bore) */
+    this.camG.append(sv('circle',{r:8,fill:BG,stroke:'rgba(0,0,0,.4)','stroke-width':1}));
+    /* center dot */
+    this.camG.append(sv('circle',{r:2.5,fill:'rgba(0,0,0,.5)'}));
+
+    /* ground symbol at center */
+    this.camG.append(sv('line',{x1:-6,y1:5,x2:6,y2:5,stroke:'rgba(0,0,0,.4)','stroke-width':1}));
+    for(let i=-2;i<=2;i++){
+      this.camG.append(sv('line',{x1:i*3-2,y1:5,x2:i*3-4,y2:9,stroke:'rgba(0,0,0,.25)','stroke-width':.7}));
+    }
+
+    /* rmin arrow */
+    if(!this.opts.mini){
+      const rb=this.cam.Rb*this.sc;
+      const arad=45*DEG;
+      this.camG.append(sv('line',{x1:10*Math.cos(arad),y1:-10*Math.sin(arad),x2:(rb-4)*Math.cos(arad),y2:-(rb-4)*Math.sin(arad),stroke:'rgba(0,0,0,.45)','stroke-width':.8}));
+      const t=sv('text',{x:(rb*0.5)*Math.cos(arad)+6,y:-(rb*0.5)*Math.sin(arad)-4,'font-size':'9',fill:'rgba(0,0,0,.55)','font-family':'serif','font-style':'italic'});
+      t.innerHTML='r<tspan font-size="7" dy="3">min</tspan>';
+      this.camG.append(t);
+    }
+
+    /* ω rotation arrow */
+    if(!this.opts.mini){
+      const wr=this.cam.Rb*this.sc+35;
+      const arc=arcPath(0,0,wr,160,210);
+      const mk=sv('marker',{id:'omegaArr',viewBox:'0 0 8 8',refX:4,refY:4,markerWidth:5,markerHeight:5,orient:'auto'});
+      mk.append(sv('path',{d:'M1,1 L7,4 L1,7Z',fill:'rgba(0,0,0,.4)'}));
+      this.camG.closest('svg').querySelector('defs').append(mk);
+      this.camG.append(sv('path',{d:arc,fill:'none',stroke:'rgba(0,0,0,.4)','stroke-width':1,'marker-end':'url(#omegaArr)'}));
+      const wa=185*DEG;
+      const wt=sv('text',{x:(wr+10)*Math.sin(wa),y:-(wr+10)*Math.cos(wa),'font-size':'12',fill:'rgba(0,0,0,.45)','font-style':'italic','font-family':'serif','text-anchor':'middle'});
+      wt.textContent='ω';
+      this.camG.append(wt);
+    }
+
+    /* phase boundary labels (A,B,C,D) on profile */
+    if(!this.opts.mini){
+      const pb=cam.profBounds();
+      const labels=[
+        {phi:pb.D,name:'D',color:P_COLORS.nearDwell,note:'最近'},
+        {phi:pb.A,name:'A',color:P_COLORS.rise,note:'最近'},
+        {phi:pb.B,name:'B',color:P_COLORS.farDwell,note:'最远'},
+        {phi:pb.C,name:'C',color:P_COLORS.return_,note:'最远'}
+      ];
+      for(const lb of labels){
+        const r=this._profR(lb.phi)+14;
+        const pt=profPt(lb.phi,r);
+        const t=sv('text',{x:pt.x,y:pt.y+4,'font-size':'11',fill:lb.color,'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
+        t.textContent=lb.name;
+        this.camG.append(t);
+        /* small note */
+        const nr=this._profR(lb.phi)+26;
+        const np=profPt(lb.phi,nr);
+        const nt=sv('text',{x:np.x,y:np.y+3,'font-size':'7',fill:'rgba(0,0,0,.35)','text-anchor':'middle','font-family':'sans-serif'});
+        nt.textContent=lb.note;
+        this.camG.append(nt);
+      }
+
+      /* angle arcs δt δs inside cam */
+      const arcR=this.cam.Rb*this.sc*0.45;
+      const dA=cam.profBounds();
+      /* δt arc (rise angle) */
+      this.camG.append(sv('path',{d:arcPath(0,0,arcR,dA.A,dA.B),fill:'none',stroke:P_COLORS.rise,'stroke-width':1.2,'stroke-dasharray':'3,2'}));
+      const dtMid=(dA.A+dA.B)/2,dtR=arcR-10,dtp=profPt(dtMid,dtR);
+      const dt=sv('text',{x:dtp.x,y:dtp.y+3,'font-size':'9',fill:P_COLORS.rise,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
+      dt.textContent='δt';this.camG.append(dt);
+      /* δs arc (far dwell angle) */
+      this.camG.append(sv('path',{d:arcPath(0,0,arcR-4,dA.B,dA.C),fill:'none',stroke:P_COLORS.farDwell,'stroke-width':1.2,'stroke-dasharray':'3,2'}));
+      const dsMid=(dA.B+dA.C)/2,dsR=arcR-14,dsp=profPt(dsMid,dsR);
+      const ds=sv('text',{x:dsp.x,y:dsp.y+3,'font-size':'9',fill:P_COLORS.farDwell,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
+      ds.textContent='δs';this.camG.append(ds);
+    }
+  }
+
+  _buildGuide(){
+    const maxR=(this.cam.Rb+this.cam.h)*this.sc;
+    const gw=8,guideBot=-this.cam.Rb*this.sc+this.cam.rRoller*this.sc+5;
+    const guideTop=-maxR-55;
+    /* rail left */
+    this.camRoot.append(sv('rect',{x:-gw-3,y:guideTop,width:6,height:guideBot-guideTop,fill:'url(#hatch)',stroke:'rgba(0,0,0,.2)','stroke-width':.5,rx:1}));
+    /* rail right */
+    this.camRoot.append(sv('rect',{x:gw-3,y:guideTop,width:6,height:guideBot-guideTop,fill:'url(#hatch)',stroke:'rgba(0,0,0,.2)','stroke-width':.5,rx:1}));
+    /* frame bracket */
+    this.camRoot.append(sv('line',{x1:-gw-8,y1:guideTop,x2:gw+8,y2:guideTop,stroke:'rgba(0,0,0,.4)','stroke-width':1.5}));
+    for(let x=-gw-6;x<gw+6;x+=4){
+      this.camRoot.append(sv('line',{x1:x,y1:guideTop,x2:x-3,y2:guideTop-4,stroke:'rgba(0,0,0,.2)','stroke-width':.7}));
+    }
+    if(!this.opts.mini){
+      /* 最高/最低 labels */
+      const t1=sv('text',{x:-gw-14,y:-(maxR+20),'font-size':'8',fill:'rgba(0,0,0,.4)','text-anchor':'end','font-family':'sans-serif'});
+      t1.textContent='最高';this.camRoot.append(t1);
+      const t2=sv('text',{x:-gw-14,y:-(this.cam.Rb*this.sc-5),'font-size':'8',fill:'rgba(0,0,0,.4)','text-anchor':'end','font-family':'sans-serif'});
+      t2.textContent='最低';this.camRoot.append(t2);
+    }
+    this._guideTop=guideTop;
+  }
+
+  _buildFollower(){
+    const rr=this.cam.rRoller*this.sc;
+    /* roller */
+    this.followerG.append(sv('circle',{r:rr,fill:'none',stroke:'#333','stroke-width':2}));
+    const cr=rr*0.5;
+    this.followerG.append(sv('line',{x1:-cr,y1:0,x2:cr,y2:0,stroke:'rgba(0,0,0,.3)','stroke-width':.7}));
+    this.followerG.append(sv('line',{x1:0,y1:-cr,x2:0,y2:cr,stroke:'rgba(0,0,0,.3)','stroke-width':.7}));
+    /* stem */
+    this.stem=sv('rect',{x:-2.5,y:0,width:5,height:50,fill:'#333',rx:1.5});
+    this.followerG.append(this.stem);
+    /* flat head */
+    this.fHead=sv('rect',{x:-8,y:0,width:16,height:3,fill:'#333',rx:1.5});
+    this.followerG.append(this.fHead);
+    /* yellow triangle marker (like in image) */
+    this.marker=sv('polygon',{points:'0,0 -5,-8 5,-8',fill:'#F59E0B',stroke:'none'});
+    this.followerG.append(this.marker);
+  }
+
+  _buildCamLabels(){
+    /* O label */
+    const ot=sv('text',{x:-12,y:4,'font-size':'10',fill:'rgba(0,0,0,.5)','font-weight':'700','font-family':'serif','font-style':'italic'});
+    ot.textContent='O';this.camRoot.append(ot);
+  }
+
+  _buildChart(){
+    this.chartG.innerHTML='';
+    const cam=this.cam,L=this.CL,R=this.CR,T=this.CT,B=this.CB;
+    const phases=cam.chartPhases();
+    const bounds=cam.chartBounds();
+
+    /* phase background bands */
+    for(const p of phases){
+      const x1=this._degX(p.s),x2=this._degX(p.e);
+      this.chartG.append(sv('rect',{x:x1,y:T,width:x2-x1,height:B-T,fill:p.color.replace(')',',0.04)').replace('rgb','rgba').replace('#',''),opacity:.3}));
+      /* actually use a simpler approach */
+    }
+    /* clear and redo with simpler opacity */
+    this.chartG.innerHTML='';
+    for(const p of phases){
+      const x1=this._degX(p.s),x2=this._degX(p.e);
+      this.chartG.append(sv('rect',{x:x1,y:T,width:x2-x1,height:B-T,fill:p.color,opacity:.04}));
+    }
+
+    /* axes */
+    this.chartG.append(sv('line',{x1:L,y1:B,x2:R+15,y2:B,stroke:'rgba(0,0,0,.5)','stroke-width':1}));
+    this.chartG.append(sv('line',{x1:L,y1:B+5,x2:L,y2:T-15,stroke:'rgba(0,0,0,.5)','stroke-width':1}));
+    /* arrowheads */
+    this.chartG.append(sv('polygon',{points:`${R+15},${B} ${R+8},${B-3} ${R+8},${B+3}`,fill:'rgba(0,0,0,.5)'}));
+    this.chartG.append(sv('polygon',{points:`${L},${T-15} ${L-3},${T-8} ${L+3},${T-8}`,fill:'rgba(0,0,0,.5)'}));
+
+    /* Y axis label */
+    const yl=sv('text',{x:L-8,y:T-20,'font-size':'9',fill:'rgba(0,0,0,.5)','text-anchor':'middle','font-family':'sans-serif'});
+    yl.textContent='(从动件位移)S';this.chartG.append(yl);
+    /* X axis label */
+    const xl=sv('text',{x:R+20,y:B+4,'font-size':'9',fill:'rgba(0,0,0,.4)','text-anchor':'start','font-family':'sans-serif'});
+    xl.textContent='t';this.chartG.append(xl);
+
+    /* phase boundary vertical lines */
+    const bKeys=['A','B','C','D'];
+    const bColors=[P_COLORS.rise,P_COLORS.farDwell,P_COLORS.return_,P_COLORS.nearDwell];
+    const bVals=[bounds.A,bounds.B,bounds.C,bounds.D,360];
+    for(let i=0;i<4;i++){
+      const x=this._degX(bVals[i]);
+      this.chartG.append(sv('line',{x1:x,y1:T-5,x2:x,y2:B+5,stroke:'rgba(0,0,0,.12)','stroke-width':.8}));
+      /* label at top */
+      const lt=sv('text',{x:x,y:T-10,'font-size':'11',fill:bColors[i],'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
+      lt.textContent=bKeys[i];this.chartG.append(lt);
+    }
+    /* closing A */
+    const xEnd=this._degX(360);
+    this.chartG.append(sv('line',{x1:xEnd,y1:T-5,x2:xEnd,y2:B+5,stroke:'rgba(0,0,0,.12)','stroke-width':.8}));
+    const ltEnd=sv('text',{x:xEnd,y:T-10,'font-size':'11',fill:P_COLORS.rise,'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
+    ltEnd.textContent='A';this.chartG.append(ltEnd);
+
+    /* displacement curve colored by phase */
+    this.curvePaths=[];
+    for(const p of phases){
+      const pts=[];
+      const steps=Math.max(Math.ceil((p.e-p.s)/0.5),20);
+      for(let i=0;i<=steps;i++){
+        const deg=p.s+(i/steps)*(p.e-p.s);
+        pts.push({x:this._degX(deg),y:this._sY(cam.getS(deg))});
+      }
+      const path=sv('path',{d:ptPath(pts,false),fill:'none',stroke:p.color,'stroke-width':2.5,'stroke-linecap':'round','stroke-linejoin':'round'});
+      this.chartG.append(path);
+      this.curvePaths.push(path);
+    }
+
+    /* phase name labels below x-axis */
+    if(!this.opts.mini){
+      const phaseNames=[
+        {s:bounds.A,e:bounds.B,name:'推程',color:P_COLORS.rise},
+        {s:bounds.B,e:bounds.C,name:'远休止',color:P_COLORS.farDwell},
+        {s:bounds.C,e:bounds.D,name:'回程',color:P_COLORS.return_},
+        {s:bounds.D,e:360,name:'近休止',color:P_COLORS.nearDwell},
+      ];
+      for(const pn of phaseNames){
+        const mx=(this._degX(pn.s)+this._degX(pn.e))/2;
+        const t=sv('text',{x:mx,y:B+22,'font-size':'9',fill:pn.color,'text-anchor':'middle','font-weight':'600','font-family':'sans-serif'});
+        t.textContent=pn.name;this.chartG.append(t);
+      }
+      /* δt bracket */
+      const dty=B+38;
+      const dtx1=this._degX(bounds.A)+5,dtx2=this._degX(bounds.B)-5;
+      this.chartG.append(sv('line',{x1:dtx1,y1:dty,x2:dtx2,y2:dty,stroke:P_COLORS.rise,'stroke-width':.8}));
+      this.chartG.append(sv('line',{x1:dtx1,y1:dty-3,x2:dtx1,y2:dty+3,stroke:P_COLORS.rise,'stroke-width':.8}));
+      this.chartG.append(sv('line',{x1:dtx2,y1:dty-3,x2:dtx2,y2:dty+3,stroke:P_COLORS.rise,'stroke-width':.8}));
+      const dtt=sv('text',{x:(dtx1+dtx2)/2,y:dty-5,'font-size':'10',fill:P_COLORS.rise,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
+      dtt.textContent='δt';this.chartG.append(dtt);
+      /* δs bracket */
+      const dsx1=this._degX(bounds.B)+5,dsx2=this._degX(bounds.C)-5;
+      this.chartG.append(sv('line',{x1:dsx1,y1:dty,x2:dsx2,y2:dty,stroke:P_COLORS.farDwell,'stroke-width':.8}));
+      this.chartG.append(sv('line',{x1:dsx1,y1:dty-3,x2:dsx1,y2:dty+3,stroke:P_COLORS.farDwell,'stroke-width':.8}));
+      this.chartG.append(sv('line',{x1:dsx2,y1:dty-3,x2:dsx2,y2:dty+3,stroke:P_COLORS.farDwell,'stroke-width':.8}));
+      const dst=sv('text',{x:(dsx1+dsx2)/2,y:dty-5,'font-size':'10',fill:P_COLORS.farDwell,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
+      dst.textContent='δs';this.chartG.append(dst);
+    }
+
+    /* Y axis ticks */
+    const ySteps=4;
+    for(let i=0;i<=ySteps;i++){
+      const s=(cam.h/ySteps)*i;
+      const y=this._sY(s);
+      this.chartG.append(sv('line',{x1:L-3,y1:y,x2:L,y2:y,stroke:'rgba(0,0,0,.2)','stroke-width':.6}));
+      if(i>0)this.chartG.append(sv('line',{x1:L,y1:y,x2:R,y2:y,stroke:'rgba(0,0,0,.05)','stroke-width':.5}));
+      const t=sv('text',{x:L-6,y:y+3,'font-size':'7',fill:'rgba(0,0,0,.35)','text-anchor':'end','font-family':'sans-serif'});
+      t.textContent=s.toFixed(0);this.chartG.append(t);
+    }
+    /* right side vertical label "δ 凸轮转角" */
+    if(!this.opts.mini){
+      const chars='δ 凸轮转角';
+      for(let i=0;i<chars.length;i++){
+        const ct=sv('text',{x:R+25,y:T+40+i*14,'font-size':'9',fill:'rgba(0,0,0,.3)','text-anchor':'middle','font-family':'sans-serif'});
+        ct.textContent=chars[i];this.chartG.append(ct);
+      }
+    }
+  }
+
+  rebuild(cam){
+    this.cam=cam;
+    this._buildCamBody();
+    this.baseCircle.setAttribute('r',cam.Rb*this.sc);
+    this.chartG.innerHTML='';
+    this._buildChart();
+    this.update(this.angle);
+  }
+
+  update(theta){
+    this.angle=theta;
+    const t=((theta%360)+360)%360;
+    /* rotate cam */
+    this.camG.setAttribute('transform',`rotate(${this.cam.svgRot(t)})`);
+    /* follower position */
+    const s=this.cam.getS(t);
+    const rollerY=-(this.cam.Rb+s)*this.sc;
+    this.followerG.setAttribute('transform',`translate(0,${rollerY})`);
+    const rr=this.cam.rRoller*this.sc;
+    this.stem.setAttribute('y',-50-rr);this.stem.setAttribute('height',50);
+    this.fHead.setAttribute('y',-50-rr-3);
+    this.marker.setAttribute('transform',`translate(0,${-50-rr-12})`);
+    /* chart cursor */
+    const cx=this._degX(t);
+    const cy=this._sY(s);
+    this.cursor.setAttribute('x1',cx);this.cursor.setAttribute('x2',cx);
+    this.cursorDot.setAttribute('cx',cx);this.cursorDot.setAttribute('cy',cy);
+  }
+  destroy(){this.svg.remove()}
+}
+
+/* ============ ANIMATION ============ */
+class Anim{
+  constructor(){this.on=false;this.a=0;this.spd=72;this.fns=[];this._raf=0;this._t=0}
+  add(fn){this.fns.push(fn)}
+  start(){if(this.on)return;this.on=true;this._t=performance.now();this._tick()}
+  stop(){this.on=false;cancelAnimationFrame(this._raf)}
+  toggle(){this.on?this.stop():this.start()}
+  reset(){this.stop();this.a=0;this._fire()}
+  setA(v){this.a=v;this._fire()}
+  _tick(){if(!this.on)return;const n=performance.now(),dt=(n-this._t)/1000;this._t=n;this.a=(this.a+this.spd*dt)%360;this._fire();this._raf=requestAnimationFrame(()=>this._tick())}
+  _fire(){for(const f of this.fns)f(this.a)}
+}
+
+/* ============ DRAG ============ */
+class Drag{
+  constructor(svg,fn){this.svg=svg;this.fn=fn;this.on=false;this._d=this._d.bind(this);this._m=this._m.bind(this);this._u=this._u.bind(this)}
+  enable(){this.svg.addEventListener('pointerdown',this._d);window.addEventListener('pointermove',this._m);window.addEventListener('pointerup',this._u)}
+  disable(){this.svg.removeEventListener('pointerdown',this._d);window.removeEventListener('pointermove',this._m);window.removeEventListener('pointerup',this._u)}
+  _angle(e){
+    const pt=this.svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+    const ctm=this.svg.getScreenCTM();
+    if(ctm){const sp=pt.matrixTransform(ctm.inverse());const dx=sp.x-195,dy=sp.y-255;let d=Math.atan2(dx,-dy)/DEG;if(d<0)d+=360;return d}
+    return 0;
+  }
+  _toSpec(profileAngle){
+    /* convert profile angle (CW from top) to spec angle */
+    const nA=90;/* near dwell angle */
+    return((profileAngle-nA)%360+360)%360;
+  }
+  _d(e){e.preventDefault();this.on=true;this.svg.setPointerCapture(e.pointerId);this.fn(this._toSpec(this._angle(e)))}
+  _m(e){if(!this.on)return;e.preventDefault();this.fn(this._toSpec(this._angle(e)))}
+  _u(){this.on=false}
+}
+
+/* ============ CAROUSEL ============ */
+class Carousel{
+  constructor(c,d,p,n){
+    this.c=c;this.d=d;this.p=p;this.n=n;this.cards=[];this.cur=0;this.cbs=[];
+    p.addEventListener('click',()=>this.prev());n.addEventListener('click',()=>this.next());
+    let sx=0,sy=0,sw=false;
+    c.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=true},{passive:true});
+    c.addEventListener('touchend',e=>{if(!sw)return;sw=false;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.2){dx<0?this.next():this.prev()}},{passive:true});
+  }
+  add(el){el.classList.add('card','next');this.c.appendChild(el);this.cards.push(el);if(this.cards.length===1){el.classList.remove('next');el.classList.add('active')}this._dots();this._btns()}
+  goTo(i){if(i<0||i>=this.cards.length||i===this.cur)return;const dir=i>this.cur?1:-1;this.cards[this.cur].classList.remove('active');this.cards[this.cur].classList.add(dir>0?'prev':'next');this.cur=i;this.cards[i].classList.remove('prev','next');this.cards[i].classList.add('active');this._dots();this._btns();for(const f of this.cbs)f(i)}
+  next(){this.goTo(this.cur+1)}prev(){this.goTo(this.cur-1)}
+  onChange(f){this.cbs.push(f)}
+  _dots(){this.d.innerHTML='';for(let i=0;i<this.cards.length;i++){const d=document.createElement('div');d.className='dot'+(i===this.cur?' active':'');d.onclick=()=>this.goTo(i);this.d.appendChild(d)}}
+  _btns(){this.p.disabled=this.cur===0;this.n.disabled=this.cur===this.cards.length-1}
+}
+
+/* ============ CARD BUILDERS ============ */
+function mkCard(h){const d=document.createElement('div');d.innerHTML=`<div class="card-inner">${h}</div>`;return d}
+
+/* Card 0: Cover */
+function buildCover(car,cam){
+  const c=document.createElement('div');
+  c.innerHTML=`<div class="card-inner cover-card">
+    <div class="cover-title">凸轮机构<br>运动仿真</div>
+    <div class="cover-sub">交互式教学演示 · 盘形凸轮 · 滚子从动件<br>简谐运动规律 (SHM)</div>
+    <div class="svg-wrap svg-full" style="width:180px;height:220px;margin:0 auto 20px;background:transparent" id="cvW"></div>
+    <button class="start-btn" id="cvStart">开始学习 →</button>
+    <div style="margin-top:16px;font-size:11px;color:rgba(0,0,0,.3)">Rb=${cam.Rb}mm · h=${cam.h}mm · δt=${cam.riseA}° · δs=${cam.dwellA}°</div>
+  </div>`;
+  car.add(c);
+  const cv=new CombinedView(c.querySelector('#cvW'),cam,{mini:true,initAngle:0});
+  /* hide chart for cover mini */
+  cv.chartG.style.display='none';cv.cursor.style.display='none';cv.cursorDot.style.display='none';
+  cv.svg.setAttribute('viewBox','50 30 290 350');
+  const an=new Anim();an.spd=50;an.add(a=>cv.update(a));an.start();
+  c.querySelector('#cvStart').onclick=()=>car.next();
+  return{an,cv}
+}
+
+/* Card 1: Annotated Diagram */
+function buildDiagram(car,cam){
+  const c=mkCard(`
+    <div class="card-title">结构 · 运动简图</div>
+    <div class="card-subtitle">盘形凸轮与滚子从动件的运动学对照</div>
+    <div class="tag-row">
+      <span class="tag red">推程 δt=${cam.riseA}°</span>
+      <span class="tag green">远休止 δs=${cam.dwellA}°</span>
+      <span class="tag purple">回程 ${cam.returnA}°</span>
+      <span class="tag cyan">近休止 ${cam.nearA}°</span>
+    </div>
+    <div class="svg-wrap svg-full" id="diagW" style="aspect-ratio:880/430"></div>
+    <div class="formula-box" style="margin-top:12px">
+推程 (SHM): s = (h/2)(1 − cos(π·θ/δt))<br>
+回程 (SHM): s = (h/2)(1 + cos(π·(θ−δt−δs)/δr))
+    </div>
+  `);
+  car.add(c);
+  const cv=new CombinedView(c.querySelector('#diagW'),cam,{initAngle:270});
+  return{cv}
+}
+
+/* Card 2: Animation Demo */
+function buildDemo(car,cam){
+  const c=document.createElement('div');
+  c.innerHTML=`<div class="card-inner no-pad">
+    <div style="padding:16px 16px 0"><div class="card-title">原理演示</div>
+    <div class="card-subtitle">观察凸轮旋转与从动件位移的实时对应</div></div>
+    <div class="svg-wrap svg-full" id="demoW" style="aspect-ratio:880/430"></div>
+    <div class="ctrl-bar">
+      <button class="ctrl-btn active" id="demoPlay"><svg viewBox="0 0 24 24" id="demoPlayI"><path d="M8 5v14l11-7z"/></svg><span id="demoPlayL">播放</span></button>
+      <button class="ctrl-btn" id="demoReset"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>复位</button>
+      <div style="flex:1;display:flex;align-items:center;gap:5px;min-width:100px">
+        <span style="font-size:10px;color:rgba(0,0,0,.4);white-space:nowrap">速度</span>
+        <input type="range" id="demoSpd" min="15" max="270" value="72" style="flex:1">
+      </div>
+    </div>
+    <div class="data-panel" style="margin:4px 16px 12px">
+      <div><div class="data-label">转角 θ</div><div class="data-value" style="color:#0C8CE9" id="demoA">0.0°</div></div>
+      <div><div class="data-label">位移 s</div><div class="data-value" style="color:#1e8e3e" id="demoS">0.00 mm</div></div>
+    </div>
+  </div>`;
+  car.add(c);
+  const cv=new CombinedView(c.querySelector('#demoW'),cam);
+  const an=new Anim();an.spd=72;
+  an.add(a=>{cv.update(a);const t=((a%360)+360)%360;c.querySelector('#demoA').textContent=t.toFixed(1)+'°';c.querySelector('#demoS').textContent=cam.getS(t).toFixed(2)+' mm'});
+  const pb=c.querySelector('#demoPlay'),pi=c.querySelector('#demoPlayI'),pl=c.querySelector('#demoPlayL');
+  pb.onclick=()=>{an.toggle();if(an.on){pi.innerHTML='<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';pl.textContent='暂停';pb.classList.add('active')}else{pi.innerHTML='<path d="M8 5v14l11-7z"/>';pl.textContent='播放';pb.classList.remove('active')}};
+  c.querySelector('#demoReset').onclick=()=>{an.reset();pi.innerHTML='<path d="M8 5v14l11-7z"/>';pl.textContent='播放';pb.classList.remove('active')};
+  c.querySelector('#demoSpd').oninput=e=>{an.spd=+e.target.value};
+  return{an,cv,c}
+}
+
+/* Card 3: Interactive */
+function buildInter(car,cam){
+  const c=document.createElement('div');
+  c.innerHTML=`<div class="card-inner no-pad">
+    <div style="padding:14px 16px 0"><div class="card-title">互动探究</div>
+    <div class="hint-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9a3 3 0 100 6 3 3 0 000-6zm0-7C5.6 2 2 5.6 2 10c0 7.4 8 14 8 14s8-6.6 8-14c0-4.4-3.6-8-8-8z"/></svg>拖拽凸轮区域旋转</div></div>
+    <div class="svg-wrap svg-full" id="interW" style="aspect-ratio:880/430"></div>
+    <div class="data-panel" style="margin:8px 16px">
+      <div><div class="data-label">转角 θ</div><div class="data-value" style="color:#0C8CE9" id="intA">0.0°</div></div>
+      <div><div class="data-label">位移 s</div><div class="data-value" style="color:#1e8e3e" id="intS">0.00 mm</div></div>
+      <div><div class="data-label">速度 ds/dθ</div><div class="data-value" style="color:#d93025" id="intV">0.000</div></div>
+      <div><div class="data-label">加速度 d²s/dθ²</div><div class="data-value" style="color:#8e44e6" id="intAc">0.000</div></div>
+    </div>
+  </div>`;
+  car.add(c);
+  const cv=new CombinedView(c.querySelector('#interW'),cam);
+  function upd(a){const t=((a%360)+360)%360;cv.update(t);c.querySelector('#intA').textContent=t.toFixed(1)+'°';c.querySelector('#intS').textContent=cam.getS(t).toFixed(2)+' mm';c.querySelector('#intV').textContent=cam.getV(t).toFixed(4)+' mm/°';c.querySelector('#intAc').textContent=cam.getA(t).toFixed(5)+' mm/°²'}
+  upd(0);
+  const drag=new Drag(cv.svg,a=>upd(a));
+  return{cv,drag,upd,c}
+}
+
+/* Card 4: Lab */
+function buildLab(car,cam){
+  const c=mkCard(`
+    <div class="card-title">参数实验室</div>
+    <div class="card-subtitle">调整参数，实时观察凸轮轮廓与位移曲线变化</div>
+    <div class="slider-group"><div class="slider-header"><span class="slider-label">基圆半径 Rb</span><span class="slider-val" id="labRb">${cam.Rb} mm</span></div><input type="range" id="labRbS" min="20" max="80" value="${cam.Rb}" step="1"></div>
+    <div class="slider-group"><div class="slider-header"><span class="slider-label">行程 h</span><span class="slider-val" id="labH">${cam.h} mm</span></div><input type="range" id="labHS" min="5" max="40" value="${cam.h}" step="1"></div>
+    <div class="slider-group"><div class="slider-header"><span class="slider-label">推程角 δt</span><span class="slider-val" id="labR">${cam.riseA}°</span></div><input type="range" id="labRS" min="30" max="150" value="${cam.riseA}" step="5"></div>
+    <div class="slider-group"><div class="slider-header"><span class="slider-label">远休止角 δs</span><span class="slider-val" id="labD">${cam.dwellA}°</span></div><input type="range" id="labDS" min="20" max="120" value="${cam.dwellA}" step="5"></div>
+    <div class="svg-wrap svg-full" id="labW" style="aspect-ratio:880/430;margin-top:6px"></div>
+  `);
+  car.add(c);
+  let lc=new CamMechanism({Rb:cam.Rb,h:cam.h,rRoller:cam.rRoller,riseA:cam.riseA,dwellA:cam.dwellA,returnA:cam.returnA});
+  const cv=new CombinedView(c.querySelector('#labW'),lc,{mini:true});
+  const an=new Anim();an.spd=50;an.add(a=>cv.update(a));
+  function reb(){
+    const Rb=+c.querySelector('#labRbS').value,h=+c.querySelector('#labHS').value;
+    const rA=+c.querySelector('#labRS').value,dA=+c.querySelector('#labDS').value;
+    const rtA=Math.max(360-rA-dA-90,30);/* ensure near dwell ~90 or at least 30 */
+    lc=new CamMechanism({Rb,h,rRoller:8,riseA:rA,dwellA:dA,returnA:rtA});
+    cv.rebuild(lc);
+    c.querySelector('#labRb').textContent=Rb+' mm';c.querySelector('#labH').textContent=h+' mm';
+    c.querySelector('#labR').textContent=rA+'°';c.querySelector('#labD').textContent=dA+'°';
+  }
+  c.querySelector('#labRbS').oninput=reb;c.querySelector('#labHS').oninput=reb;
+  c.querySelector('#labRS').oninput=reb;c.querySelector('#labDS').oninput=reb;
+  return{an,cv,c,reb}
+}
+
+/* Card 5: Summary */
+function buildSummary(car,cam){
+  const c=mkCard(`
+    <div class="card-title">知识总结</div>
+    <div class="card-subtitle">盘形凸轮机构核心要点</div>
+    <div class="summary-item"><h3>1. 凸轮机构功能</h3><p>将凸轮的<strong>连续旋转运动</strong>转换为从动件的<strong>预定往复运动</strong>，运动规律由轮廓曲线决定。</p></div>
+    <div class="summary-item"><h3>2. 四个运动阶段</h3><p>推程 (A→B) → 远休止 (B→C) → 回程 (C→D) → 近休止 (D→A)，各阶段角度之和 = 360°。</p></div>
+    <div class="summary-item"><h3>3. 简谐运动 (SHM)</h3><p>推程: s = (h/2)(1 − cos(πθ/δt))。运动平滑无刚性冲击，但起止点存在柔性冲击（加速度突变）。</p></div>
+    <div class="summary-item"><h3>4. 基圆半径 rmin</h3><p>凸轮最小向径，决定机构尺寸。增大 rmin 可降低压力角，改善传力效率。</p></div>
+    <div class="summary-item"><h3>5. 压力角与自锁</h3><p>压力角过大导致传力效率下降甚至自锁。推荐推程压力角 ≤ 30°，回程 ≤ 70°。</p></div>
+    <div style="text-align:center;margin-top:20px;padding:18px;background:rgba(12,140,233,.06);border-radius:12px;border:1px solid rgba(12,140,233,.15)">
+      <div style="font-size:15px;font-weight:700;color:#0C8CE9;margin-bottom:4px">学习完成</div>
+      <div style="font-size:12px;color:rgba(0,0,0,.35)">可返回前几页继续互动探究</div>
+    </div>
+  `);
+  car.add(c);return{}
+}
+
+/* ============ MAIN ============ */
+function main(){
+  const cam=new CamMechanism({Rb:40,h:20,rRoller:8,riseA:90,dwellA:60,returnA:120});
+  const car=new Carousel(document.getElementById('carousel'),document.getElementById('dots'),document.getElementById('prevBtn'),document.getElementById('nextBtn'));
+  const cover=buildCover(car,cam);
+  const diag=buildDiagram(car,cam);
+  const demo=buildDemo(car,cam);
+  const inter=buildInter(car,cam);
+  const lab=buildLab(car,cam);
+  buildSummary(car,cam);
+
+  car.onChange(i=>{
+    if(i===0)cover.an.start();else cover.an.stop();
+    if(i!==2){demo.an.stop();const pi=demo.c.querySelector('#demoPlayI'),pl=demo.c.querySelector('#demoPlayL'),pb=demo.c.querySelector('#demoPlay');if(pi)pi.innerHTML='<path d="M8 5v14l11-7z"/>';if(pl)pl.textContent='播放';if(pb)pb.classList.remove('active')}
+    if(i===3){inter.drag.enable();inter.upd(0)}else inter.drag.disable();
+    if(i===4)lab.an.start();else lab.an.stop();
+  });
+  cover.an.start();
+}
+document.addEventListener('DOMContentLoaded',main);
+</script>
+</body>
+</html>
