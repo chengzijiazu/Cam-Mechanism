@@ -167,8 +167,8 @@ class CombinedView{
     this.cam=cam;this.container=container;this.opts=opts;
     this.angle=0;
     /* Layout constants */
-    this.cx=195;this.cy=255;this.sc=2;/* mm→SVG */
-    this.CL=455;this.CR=845;this.CT=68;this.CB=358;
+    this.cx=220;this.cy=230;this.sc=2;/* mm→SVG */
+    this.CL=55;this.CR=400;this.CT=440;this.CB=700;
     this._build();
   }
   _profR(phi){return this.cam.profR(phi)*this.sc}
@@ -177,7 +177,7 @@ class CombinedView{
   _sY(s){return this.CB-(s/(this.cam.h||1))*(this.CB-this.CT)}
 
   _build(){
-    this.svg=mkSVG('0 0 880 430');
+    this.svg=mkSVG('0 0 440 770');
     this.svg.style.touchAction='none';
     const defs=sv('defs');
     /* hatch pattern */
@@ -187,7 +187,7 @@ class CombinedView{
     this.svg.append(defs);
 
     /* background */
-    this.svg.append(sv('rect',{width:880,height:430,fill:BG,rx:0}));
+    this.svg.append(sv('rect',{width:440,height:770,fill:BG,rx:0}));
 
     /* ---- CAM SECTION ---- */
     this.camRoot=sv('g',{transform:`translate(${this.cx},${this.cy})`});
@@ -268,8 +268,8 @@ class CombinedView{
       const rb=this.cam.Rb*this.sc;
       const arad=45*DEG;
       this.camG.append(sv('line',{x1:10*Math.cos(arad),y1:-10*Math.sin(arad),x2:(rb-4)*Math.cos(arad),y2:-(rb-4)*Math.sin(arad),stroke:'rgba(0,0,0,.45)','stroke-width':.8}));
-      const t=sv('text',{x:(rb*0.5)*Math.cos(arad)+6,y:-(rb*0.5)*Math.sin(arad)-4,'font-size':'9',fill:'rgba(0,0,0,.55)','font-family':'serif','font-style':'italic'});
-      t.innerHTML='r<tspan font-size="7" dy="3">min</tspan>';
+      const t=sv('text',{x:(rb*0.5)*Math.cos(arad)+6,y:-(rb*0.5)*Math.sin(arad)-4,'font-size':'11',fill:'rgba(0,0,0,.55)','font-family':'serif','font-style':'italic'});
+      t.innerHTML='r<tspan font-size="9" dy="3">min</tspan>';
       this.camG.append(t);
     }
 
@@ -282,7 +282,7 @@ class CombinedView{
       this.camG.closest('svg').querySelector('defs').append(mk);
       this.camG.append(sv('path',{d:arc,fill:'none',stroke:'rgba(0,0,0,.4)','stroke-width':1,'marker-end':'url(#omegaArr)'}));
       const wa=185*DEG;
-      const wt=sv('text',{x:(wr+10)*Math.sin(wa),y:-(wr+10)*Math.cos(wa),'font-size':'12',fill:'rgba(0,0,0,.45)','font-style':'italic','font-family':'serif','text-anchor':'middle'});
+      const wt=sv('text',{x:(wr+10)*Math.sin(wa),y:-(wr+10)*Math.cos(wa),'font-size':'14',fill:'rgba(0,0,0,.45)','font-style':'italic','font-family':'serif','text-anchor':'middle'});
       wt.textContent='ω';
       this.camG.append(wt);
     }
@@ -299,13 +299,13 @@ class CombinedView{
       for(const lb of labels){
         const r=this._profR(lb.phi)+14;
         const pt=profPt(lb.phi,r);
-        const t=sv('text',{x:pt.x,y:pt.y+4,'font-size':'11',fill:lb.color,'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
+        const t=sv('text',{x:pt.x,y:pt.y+4,'font-size':'13',fill:lb.color,'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
         t.textContent=lb.name;
         this.camG.append(t);
         /* small note */
         const nr=this._profR(lb.phi)+26;
         const np=profPt(lb.phi,nr);
-        const nt=sv('text',{x:np.x,y:np.y+3,'font-size':'7',fill:'rgba(0,0,0,.35)','text-anchor':'middle','font-family':'sans-serif'});
+        const nt=sv('text',{x:np.x,y:np.y+3,'font-size':'9',fill:'rgba(0,0,0,.35)','text-anchor':'middle','font-family':'sans-serif'});
         nt.textContent=lb.note;
         this.camG.append(nt);
       }
@@ -316,12 +316,12 @@ class CombinedView{
       /* δt arc (rise angle) */
       this.camG.append(sv('path',{d:arcPath(0,0,arcR,dA.A,dA.B),fill:'none',stroke:P_COLORS.rise,'stroke-width':1.2,'stroke-dasharray':'3,2'}));
       const dtMid=(dA.A+dA.B)/2,dtR=arcR-10,dtp=profPt(dtMid,dtR);
-      const dt=sv('text',{x:dtp.x,y:dtp.y+3,'font-size':'9',fill:P_COLORS.rise,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
+      const dt=sv('text',{x:dtp.x,y:dtp.y+3,'font-size':'11',fill:P_COLORS.rise,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
       dt.textContent='δt';this.camG.append(dt);
       /* δs arc (far dwell angle) */
       this.camG.append(sv('path',{d:arcPath(0,0,arcR-4,dA.B,dA.C),fill:'none',stroke:P_COLORS.farDwell,'stroke-width':1.2,'stroke-dasharray':'3,2'}));
       const dsMid=(dA.B+dA.C)/2,dsR=arcR-14,dsp=profPt(dsMid,dsR);
-      const ds=sv('text',{x:dsp.x,y:dsp.y+3,'font-size':'9',fill:P_COLORS.farDwell,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
+      const ds=sv('text',{x:dsp.x,y:dsp.y+3,'font-size':'11',fill:P_COLORS.farDwell,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
       ds.textContent='δs';this.camG.append(ds);
     }
   }
@@ -341,9 +341,9 @@ class CombinedView{
     }
     if(!this.opts.mini){
       /* 最高/最低 labels */
-      const t1=sv('text',{x:-gw-14,y:-(maxR+20),'font-size':'8',fill:'rgba(0,0,0,.4)','text-anchor':'end','font-family':'sans-serif'});
+      const t1=sv('text',{x:-gw-14,y:-(maxR+20),'font-size':'10',fill:'rgba(0,0,0,.4)','text-anchor':'end','font-family':'sans-serif'});
       t1.textContent='最高';this.camRoot.append(t1);
-      const t2=sv('text',{x:-gw-14,y:-(this.cam.Rb*this.sc-5),'font-size':'8',fill:'rgba(0,0,0,.4)','text-anchor':'end','font-family':'sans-serif'});
+      const t2=sv('text',{x:-gw-14,y:-(this.cam.Rb*this.sc-5),'font-size':'10',fill:'rgba(0,0,0,.4)','text-anchor':'end','font-family':'sans-serif'});
       t2.textContent='最低';this.camRoot.append(t2);
     }
     this._guideTop=guideTop;
@@ -369,7 +369,7 @@ class CombinedView{
 
   _buildCamLabels(){
     /* O label */
-    const ot=sv('text',{x:-12,y:4,'font-size':'10',fill:'rgba(0,0,0,.5)','font-weight':'700','font-family':'serif','font-style':'italic'});
+    const ot=sv('text',{x:-12,y:4,'font-size':'12',fill:'rgba(0,0,0,.5)','font-weight':'700','font-family':'serif','font-style':'italic'});
     ot.textContent='O';this.camRoot.append(ot);
   }
 
@@ -400,10 +400,10 @@ class CombinedView{
     this.chartG.append(sv('polygon',{points:`${L},${T-15} ${L-3},${T-8} ${L+3},${T-8}`,fill:'rgba(0,0,0,.5)'}));
 
     /* Y axis label */
-    const yl=sv('text',{x:L-8,y:T-20,'font-size':'9',fill:'rgba(0,0,0,.5)','text-anchor':'middle','font-family':'sans-serif'});
+    const yl=sv('text',{x:L-5,y:T-20,'font-size':'11',fill:'rgba(0,0,0,.5)','text-anchor':'start','font-family':'sans-serif'});
     yl.textContent='(从动件位移)S';this.chartG.append(yl);
     /* X axis label */
-    const xl=sv('text',{x:R+20,y:B+4,'font-size':'9',fill:'rgba(0,0,0,.4)','text-anchor':'start','font-family':'sans-serif'});
+    const xl=sv('text',{x:R+20,y:B+4,'font-size':'11',fill:'rgba(0,0,0,.4)','text-anchor':'start','font-family':'sans-serif'});
     xl.textContent='t';this.chartG.append(xl);
 
     /* phase boundary vertical lines */
@@ -414,13 +414,13 @@ class CombinedView{
       const x=this._degX(bVals[i]);
       this.chartG.append(sv('line',{x1:x,y1:T-5,x2:x,y2:B+5,stroke:'rgba(0,0,0,.12)','stroke-width':.8}));
       /* label at top */
-      const lt=sv('text',{x:x,y:T-10,'font-size':'11',fill:bColors[i],'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
+      const lt=sv('text',{x:x,y:T-10,'font-size':'13',fill:bColors[i],'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
       lt.textContent=bKeys[i];this.chartG.append(lt);
     }
     /* closing A */
     const xEnd=this._degX(360);
     this.chartG.append(sv('line',{x1:xEnd,y1:T-5,x2:xEnd,y2:B+5,stroke:'rgba(0,0,0,.12)','stroke-width':.8}));
-    const ltEnd=sv('text',{x:xEnd,y:T-10,'font-size':'11',fill:P_COLORS.rise,'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
+    const ltEnd=sv('text',{x:xEnd,y:T-10,'font-size':'13',fill:P_COLORS.rise,'font-weight':'700','text-anchor':'middle','font-family':'sans-serif'});
     ltEnd.textContent='A';this.chartG.append(ltEnd);
 
     /* displacement curve colored by phase */
@@ -447,7 +447,7 @@ class CombinedView{
       ];
       for(const pn of phaseNames){
         const mx=(this._degX(pn.s)+this._degX(pn.e))/2;
-        const t=sv('text',{x:mx,y:B+22,'font-size':'9',fill:pn.color,'text-anchor':'middle','font-weight':'600','font-family':'sans-serif'});
+        const t=sv('text',{x:mx,y:B+22,'font-size':'11',fill:pn.color,'text-anchor':'middle','font-weight':'600','font-family':'sans-serif'});
         t.textContent=pn.name;this.chartG.append(t);
       }
       /* δt bracket */
@@ -456,14 +456,14 @@ class CombinedView{
       this.chartG.append(sv('line',{x1:dtx1,y1:dty,x2:dtx2,y2:dty,stroke:P_COLORS.rise,'stroke-width':.8}));
       this.chartG.append(sv('line',{x1:dtx1,y1:dty-3,x2:dtx1,y2:dty+3,stroke:P_COLORS.rise,'stroke-width':.8}));
       this.chartG.append(sv('line',{x1:dtx2,y1:dty-3,x2:dtx2,y2:dty+3,stroke:P_COLORS.rise,'stroke-width':.8}));
-      const dtt=sv('text',{x:(dtx1+dtx2)/2,y:dty-5,'font-size':'10',fill:P_COLORS.rise,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
+      const dtt=sv('text',{x:(dtx1+dtx2)/2,y:dty-5,'font-size':'12',fill:P_COLORS.rise,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
       dtt.textContent='δt';this.chartG.append(dtt);
       /* δs bracket */
       const dsx1=this._degX(bounds.B)+5,dsx2=this._degX(bounds.C)-5;
       this.chartG.append(sv('line',{x1:dsx1,y1:dty,x2:dsx2,y2:dty,stroke:P_COLORS.farDwell,'stroke-width':.8}));
       this.chartG.append(sv('line',{x1:dsx1,y1:dty-3,x2:dsx1,y2:dty+3,stroke:P_COLORS.farDwell,'stroke-width':.8}));
       this.chartG.append(sv('line',{x1:dsx2,y1:dty-3,x2:dsx2,y2:dty+3,stroke:P_COLORS.farDwell,'stroke-width':.8}));
-      const dst=sv('text',{x:(dsx1+dsx2)/2,y:dty-5,'font-size':'10',fill:P_COLORS.farDwell,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
+      const dst=sv('text',{x:(dsx1+dsx2)/2,y:dty-5,'font-size':'12',fill:P_COLORS.farDwell,'text-anchor':'middle','font-family':'serif','font-style':'italic'});
       dst.textContent='δs';this.chartG.append(dst);
     }
 
@@ -474,14 +474,14 @@ class CombinedView{
       const y=this._sY(s);
       this.chartG.append(sv('line',{x1:L-3,y1:y,x2:L,y2:y,stroke:'rgba(0,0,0,.2)','stroke-width':.6}));
       if(i>0)this.chartG.append(sv('line',{x1:L,y1:y,x2:R,y2:y,stroke:'rgba(0,0,0,.05)','stroke-width':.5}));
-      const t=sv('text',{x:L-6,y:y+3,'font-size':'7',fill:'rgba(0,0,0,.35)','text-anchor':'end','font-family':'sans-serif'});
+      const t=sv('text',{x:L-6,y:y+3,'font-size':'9',fill:'rgba(0,0,0,.35)','text-anchor':'end','font-family':'sans-serif'});
       t.textContent=s.toFixed(0);this.chartG.append(t);
     }
     /* right side vertical label "δ 凸轮转角" */
     if(!this.opts.mini){
       const chars='δ 凸轮转角';
       for(let i=0;i<chars.length;i++){
-        const ct=sv('text',{x:R+25,y:T+40+i*14,'font-size':'9',fill:'rgba(0,0,0,.3)','text-anchor':'middle','font-family':'sans-serif'});
+        const ct=sv('text',{x:R+25,y:T+40+i*14,'font-size':'11',fill:'rgba(0,0,0,.3)','text-anchor':'middle','font-family':'sans-serif'});
         ct.textContent=chars[i];this.chartG.append(ct);
       }
     }
@@ -539,7 +539,7 @@ class Drag{
   _angle(e){
     const pt=this.svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
     const ctm=this.svg.getScreenCTM();
-    if(ctm){const sp=pt.matrixTransform(ctm.inverse());const dx=sp.x-195,dy=sp.y-255;let d=Math.atan2(dx,-dy)/DEG;if(d<0)d+=360;return d}
+    if(ctm){const sp=pt.matrixTransform(ctm.inverse());const dx=sp.x-220,dy=sp.y-230;let d=Math.atan2(dx,-dy)/DEG;if(d<0)d+=360;return d}
     return 0;
   }
   _toSpec(profileAngle){
@@ -586,7 +586,7 @@ function buildCover(car,cam){
   const cv=new CombinedView(c.querySelector('#cvW'),cam,{mini:true,initAngle:0});
   /* hide chart for cover mini */
   cv.chartG.style.display='none';cv.cursor.style.display='none';cv.cursorDot.style.display='none';
-  cv.svg.setAttribute('viewBox','50 30 290 350');
+  cv.svg.setAttribute('viewBox','70 25 300 380');
   const an=new Anim();an.spd=50;an.add(a=>cv.update(a));an.start();
   c.querySelector('#cvStart').onclick=()=>car.next();
   return{an,cv}
@@ -603,7 +603,7 @@ function buildDiagram(car,cam){
       <span class="tag purple">回程 ${cam.returnA}°</span>
       <span class="tag cyan">近休止 ${cam.nearA}°</span>
     </div>
-    <div class="svg-wrap svg-full" id="diagW" style="aspect-ratio:880/430"></div>
+    <div class="svg-wrap svg-full" id="diagW" style="aspect-ratio:440/770"></div>
     <div class="formula-box" style="margin-top:12px">
 推程 (SHM): s = (h/2)(1 − cos(π·θ/δt))<br>
 回程 (SHM): s = (h/2)(1 + cos(π·(θ−δt−δs)/δr))
@@ -620,7 +620,7 @@ function buildDemo(car,cam){
   c.innerHTML=`<div class="card-inner no-pad">
     <div style="padding:16px 16px 0"><div class="card-title">原理演示</div>
     <div class="card-subtitle">观察凸轮旋转与从动件位移的实时对应</div></div>
-    <div class="svg-wrap svg-full" id="demoW" style="aspect-ratio:880/430"></div>
+    <div class="svg-wrap svg-full" id="demoW" style="aspect-ratio:440/770"></div>
     <div class="ctrl-bar">
       <button class="ctrl-btn active" id="demoPlay"><svg viewBox="0 0 24 24" id="demoPlayI"><path d="M8 5v14l11-7z"/></svg><span id="demoPlayL">播放</span></button>
       <button class="ctrl-btn" id="demoReset"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>复位</button>
@@ -651,7 +651,7 @@ function buildInter(car,cam){
   c.innerHTML=`<div class="card-inner no-pad">
     <div style="padding:14px 16px 0"><div class="card-title">互动探究</div>
     <div class="hint-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9a3 3 0 100 6 3 3 0 000-6zm0-7C5.6 2 2 5.6 2 10c0 7.4 8 14 8 14s8-6.6 8-14c0-4.4-3.6-8-8-8z"/></svg>拖拽凸轮区域旋转</div></div>
-    <div class="svg-wrap svg-full" id="interW" style="aspect-ratio:880/430"></div>
+    <div class="svg-wrap svg-full" id="interW" style="aspect-ratio:440/770"></div>
     <div class="data-panel" style="margin:8px 16px">
       <div><div class="data-label">转角 θ</div><div class="data-value" style="color:#0C8CE9" id="intA">0.0°</div></div>
       <div><div class="data-label">位移 s</div><div class="data-value" style="color:#1e8e3e" id="intS">0.00 mm</div></div>
@@ -676,7 +676,7 @@ function buildLab(car,cam){
     <div class="slider-group"><div class="slider-header"><span class="slider-label">行程 h</span><span class="slider-val" id="labH">${cam.h} mm</span></div><input type="range" id="labHS" min="5" max="40" value="${cam.h}" step="1"></div>
     <div class="slider-group"><div class="slider-header"><span class="slider-label">推程角 δt</span><span class="slider-val" id="labR">${cam.riseA}°</span></div><input type="range" id="labRS" min="30" max="150" value="${cam.riseA}" step="5"></div>
     <div class="slider-group"><div class="slider-header"><span class="slider-label">远休止角 δs</span><span class="slider-val" id="labD">${cam.dwellA}°</span></div><input type="range" id="labDS" min="20" max="120" value="${cam.dwellA}" step="5"></div>
-    <div class="svg-wrap svg-full" id="labW" style="aspect-ratio:880/430;margin-top:6px"></div>
+    <div class="svg-wrap svg-full" id="labW" style="aspect-ratio:440/770;margin-top:6px"></div>
   `);
   car.add(c);
   let lc=new CamMechanism({Rb:cam.Rb,h:cam.h,rRoller:cam.rRoller,riseA:cam.riseA,dwellA:cam.dwellA,returnA:cam.returnA});
